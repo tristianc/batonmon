@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
-# remote_listener.py
 import re
 from evdev import InputDevice, categorize, ecodes, list_devices
 import subprocess
 import time
+
+target_name = "Sofabaton03B03 Consumer Control"  # e.g., "Bluetooth Remote"
 
 class UnknownOutput(Exception):
     pass
@@ -23,13 +24,14 @@ def toggle_input():
         else:
             raise UnknownOutput
         print(f"Setting to output {output}") 
-        subprocess.run(["ddcutil", "-d", str(display), "setvcp", "60", output])
+        proc = subprocess.run(["ddcutil", "-d", str(display), "setvcp", "60", output], text=True)
+        proc.check_returncode()
     except (IndexError, UnknownOutput) as err:
         print("Unknown display output")
         return
- 
-
-target_name = "Sofabaton03B03 Consumer Control"  # e.g., "Bluetooth Remote"
+    except CalledProcessError as err:
+        print(f"Failed to invoke ddcutil: {proc.stderr}")
+        return
 
 while True:
     devices = [InputDevice(path) for path in list_devices()]
@@ -51,6 +53,5 @@ while True:
                 if key_event.keystate == key_event.key_down:
                     if key_event.keycode == 'KEY_SEARCH':  # Replace with your button
                         toggle_input()
-                        #subprocess.Popen(['./script.fish'])
     except OSError as err:
         print("Device lost")
