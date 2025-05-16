@@ -1,0 +1,11 @@
+[Unit]
+Description=Input Switching Monitor for SofaBaton U1
+After=systemd-user-sessions.servic
+StartLimitIntervalSec=30
+StartLimitBurst=2
+
+[Service]
+ExecStart=python /usr/local/bin/batonmon
+Restart=always
+
+
