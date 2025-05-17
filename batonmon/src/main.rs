@@ -3,8 +3,8 @@ use log::{error, info, warn};
 use evdev::{Device, EventSummary, KeyCode};
 use std::path::PathBuf;
 use std::{thread, time};
-extern crate libnotify;
-extern crate single_instance;
+use libnotify::Notification;
+use single_instance::SingleInstance;
 
 const INPUT_SOURCE: FeatureCode = 0x60;
 const DISPLAYPORT: u16 = 0x0f;
@@ -44,7 +44,7 @@ fn main() {
 }
 
 pub fn ensure_single_instance(uniq_id: &str) -> bool {
-    let instance = Box::new(single_instance::SingleInstance::new(uniq_id).unwrap());
+    let instance = Box::new(SingleInstance::new(uniq_id).unwrap());
     if instance.is_single() {
         Box::leak(instance);
         true
@@ -61,7 +61,7 @@ fn poll_device(dev: &mut (PathBuf, Device)) {
                 for event in e {
                     match event.destructure() {
                         EventSummary::Key(key_event, KeyCode::KEY_SEARCH, 1) => {
-                            let notification = libnotify::Notification::new(
+                            let notification = Notification::new(
                                 "SofaBaton Input Detected",
                                 "Switching display output",
                                 "ok",
@@ -69,7 +69,15 @@ fn poll_device(dev: &mut (PathBuf, Device)) {
                             notification.show().unwrap();
                             info!("Key pressed: {:?}", key_event);
                             match toggle_input(1) {
-                                Err(e) => error!("Could not toggle input: {:?}", e),
+                                Err(e) => {
+                                    let notification = Notification::new(
+                                        "Switching output failed",
+                                        "Check batonmon logs for more details",
+                                        "error",
+                                    );
+                                    notification.show().unwrap();
+                                    error!("Could not toggle input: {:?}", e)
+                                },
                                 _ => {}
                             }
                         }
@@ -78,12 +86,6 @@ fn poll_device(dev: &mut (PathBuf, Device)) {
                 }
             }
             Err(e) => {
-                let notification = libnotify::Notification::new(
-                    "Switching output failed",
-                    "Check batonmon logs for more details",
-                    "error",
-                );
-                notification.show().unwrap();
                 error!("Failed to fetch events: {:?}", e);
                 break;
             }
@@ -92,9 +94,9 @@ fn poll_device(dev: &mut (PathBuf, Device)) {
 }
 
 fn toggle_input(display_index: usize) -> Result<(), anyhow::Error> {
-    let notification = libnotify::Notification::new("", None, "display");
+    let notification = Notification::new("", None, "display");
     let mut displays = Display::enumerate();
-    info! {"Detected display {:?}", displays[display_index].info.model_name.clone().unwrap()};
+    info!("Detected display {:?}", displays[display_index].info.model_name.clone().unwrap());
     let current_output: VcpValue = displays[display_index]
         .handle
         .get_vcp_feature(INPUT_SOURCE)?;
