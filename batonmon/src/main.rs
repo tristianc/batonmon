@@ -1,4 +1,5 @@
 use ddc_hi::{Ddc, Display, FeatureCode, VcpValue};
+use log::{error, info, warn};
 use evdev::{Device, EventSummary, KeyCode};
 use std::path::PathBuf;
 use std::{thread, time};
@@ -10,6 +11,8 @@ const DISPLAYPORT: u16 = 0x0f;
 const THUNDERBOLT: u16 = 0x19;
 
 fn main() {
+    env_logger::init();
+    
     let target_name = String::from("Sofabaton03B03 Consumer Control");
 
     assert!(ensure_single_instance("batonmon"));
@@ -24,17 +27,17 @@ fn main() {
             match dev.1.name() {
                 Some(d) => {
                     if d == target_name {
-                        println!("Found device: {}", d);
+                        info!("Found device: {}", d);
                         device_found = true;
                         poll_device(&mut dev);
                     }
                 }
-                None => println!("Invalid device"),
+                None => warn!("Invalid device"),
             }
         }
 
         if !device_found {
-            println!("Could not find device");
+            warn!("Could not find device");
             thread::sleep(time::Duration::from_secs(1));
         }
     }
@@ -59,14 +62,14 @@ fn poll_device(dev: &mut (PathBuf, Device)) {
                     match event.destructure() {
                         EventSummary::Key(key_event, KeyCode::KEY_SEARCH, 1) => {
                             let notification = libnotify::Notification::new(
-                                "Input Detected",
-                                "Switching input",
+                                "SofaBaton Input Detected",
+                                "Switching display output",
                                 "ok",
                             );
                             notification.show().unwrap();
-                            println!("Key pressed: {:?}", key_event);
+                            info!("Key pressed: {:?}", key_event);
                             match toggle_input(1) {
-                                Err(e) => println!("Could not toggle input: {:?}", e),
+                                Err(e) => error!("Could not toggle input: {:?}", e),
                                 _ => {}
                             }
                         }
@@ -75,7 +78,13 @@ fn poll_device(dev: &mut (PathBuf, Device)) {
                 }
             }
             Err(e) => {
-                println!("Failed to fetch events: {:?}", e);
+                let notification = libnotify::Notification::new(
+                    "Switching output failed",
+                    "Check batonmon logs for more details",
+                    "error",
+                );
+                notification.show().unwrap();
+                error!("Failed to fetch events: {:?}", e);
                 break;
             }
         }
@@ -85,7 +94,7 @@ fn poll_device(dev: &mut (PathBuf, Device)) {
 fn toggle_input(display_index: usize) -> Result<(), anyhow::Error> {
     let notification = libnotify::Notification::new("", None, "display");
     let mut displays = Display::enumerate();
-    println! {"Detected display {:?}", displays[display_index].info.model_name.clone().unwrap()};
+    info! {"Detected display {:?}", displays[display_index].info.model_name.clone().unwrap()};
     let current_output: VcpValue = displays[display_index]
         .handle
         .get_vcp_feature(INPUT_SOURCE)?;
