@@ -1,0 +1,11 @@
+[package]
+name = "batonmon"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+ddc-hi = "0.4.1"
+evdev = "0.13.1"
+libnotify = "1.0.3"
+single-instance = "0.3.3"
