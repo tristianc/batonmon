@@ -12,7 +12,7 @@ const THUNDERBOLT: u16 = 0x19;
 
 fn main() {
     env_logger::init();
-    
+
     let target_name = String::from("Sofabaton03B03 Consumer Control");
 
     assert!(ensure_single_instance("batonmon"));
@@ -71,7 +71,7 @@ fn poll_device(dev: &mut (PathBuf, Device)) {
                             match toggle_input(1) {
                                 Err(e) => {
                                     let notification = Notification::new(
-                                        "Switching output failed",
+                                        "Switching Output Failed",
                                         "Check batonmon logs for more details",
                                         "error",
                                     );
@@ -103,14 +103,14 @@ fn toggle_input(display_index: usize) -> Result<(), anyhow::Error> {
     let output = match current_output.sl as u16 {
         DISPLAYPORT => {
             notification
-                .update("Switching output", Some("Switching to THUNDERBOLT"), None)
+                .update("Switching Output", Some("Switching to THUNDERBOLT"), None)
                 .unwrap();
             notification.show()?;
             THUNDERBOLT
         }
         THUNDERBOLT => {
             notification
-                .update("Switching output", Some("Switching to DISPLAYPORT"), None)
+                .update("Switching Output", Some("Switching to DISPLAYPORT"), None)
                 .unwrap();
             notification.show()?;
             DISPLAYPORT
