@@ -31,7 +31,7 @@ fn main() {
                         device_found = true;
                         poll_device(&mut dev);
                     }
-                }
+                },
                 None => warn!("Invalid device"),
             }
         }
@@ -80,7 +80,7 @@ fn poll_device(dev: &mut (PathBuf, Device)) {
                                 },
                                 _ => {}
                             }
-                        }
+                        },
                         _ => (),
                     }
                 }
