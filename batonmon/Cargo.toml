@@ -2,6 +2,8 @@
 name = "batonmon"
 version = "0.1.0"
 edition = "2024"
+license = "Apache-2.0"
+description = "Utility to switch monitor outputs"
 
 [dependencies]
 anyhow = "1.0.98"
@@ -11,3 +13,12 @@ libnotify = "1.0.3"
 single-instance = "0.3.3"
 log = "0.4.27"
 env_logger = "0.11.8"
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/batonmon", dest = "/usr/local/bin/batonmon", mode = "0755" },
+]
+
+[package.metadata.generate-rpm.requires]
+libnotify = ">= 0.8.6"
+libevdev = ">= 1.13"
